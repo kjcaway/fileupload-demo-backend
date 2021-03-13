@@ -6,6 +6,7 @@ csv 파일 업로드를 통한 DB 저장 기능 개발
 - JDK: 11
 - Framework: SpringBoot 2.4
 - DB: MariaDB
+- Build: Gradle 6.8
 
 ## 초기화 작업
 - DB 생성 및 설정
