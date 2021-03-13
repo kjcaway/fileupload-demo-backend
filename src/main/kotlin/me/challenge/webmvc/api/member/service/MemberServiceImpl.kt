@@ -29,28 +29,16 @@ class MemberServiceImpl(
     override fun uploadMembersFromFile(file: MultipartFile): TaskDto {
         try {
             val taskId = UUID.randomUUID().toString()
-            val reader = BufferedReader(InputStreamReader(file.inputStream))
+            val memberList = getMemberListFromFile(file)
+            val entityList = getMemberEntityList(memberList,taskId)
 
-            val csvToBean = CsvToBeanBuilder<MemberCsv>(reader)
-                .withType(MemberCsv::class.java)
-                .withIgnoreLeadingWhiteSpace(true)
-                .build()
-
-            val memberList = csvToBean.parse()
-            val entityList = mutableListOf<Member>()
-
-            var num = 1
-            memberList.forEach{
-                entityList.add(Member(it, taskId, num++))
-            }
-
-            // run async
+            // run async for save members
             bulkInsertMembers(entityList)
 
             return TaskDto(
                     resultCode = ResultCode.SUCCESS,
                     taskId = taskId,
-                    totalCount = num
+                    totalCount = entityList.size
             )
         } catch (e: Exception){
             throw e
@@ -67,6 +55,26 @@ class MemberServiceImpl(
         } catch (e: Exception){
             throw e
         }
+    }
+
+    private fun getMemberListFromFile(file: MultipartFile): List<MemberCsv>{
+        val reader = BufferedReader(InputStreamReader(file.inputStream))
+        val csvToBean = CsvToBeanBuilder<MemberCsv>(reader)
+                .withType(MemberCsv::class.java)
+                .withIgnoreLeadingWhiteSpace(true)
+                .build()
+
+        return csvToBean.parse()
+    }
+
+    private fun getMemberEntityList(list: List<MemberCsv>, taskId: String): List<Member>{
+        val entityList = mutableListOf<Member>()
+
+        list.forEachIndexed{ idx, it ->
+            entityList.add(Member(it, taskId, (idx+1)+1))
+        }
+
+        return entityList
     }
 
     @Async
